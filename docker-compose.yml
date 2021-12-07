@@ -55,6 +55,47 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  nacos:
+    image: "nacos/nacos-server:2.0.3"
+    hostname: "nacos.local"
+    container_name: nacos
+    networks:
+      local:
+        aliases:
+          - "nacos.local"
+    volumes:
+      - ./data/nacos/logs:/home/nacos/logs
+      - ./config/nacos/custom.properties:/home/nacos/init.d/custom.properties
+    ports:
+      - "8848:8848"
+    depends_on:
+      - nacos-mysql
+    environment:
+      PREFER_HOST_MODE: hostname
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: nacos-mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_USER: ${NACOS_MYSQL_USER}
+      MYSQL_SERVICE_PASSWORD: ${NACOS_MYSQL_PASSWORD}
+      MYSQL_SERVICE_DB_NAME: ${NACOS_MYSQL_DB_NAME}
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  nacos-mysql:
+    image: nacos/nacos-mysql:8.0.16
+    container_name: nacos-mysql
+    hostname: nacos-mysql.local
+    networks:
+      local:
+        aliases:
+          - "nacos-mysql.local"
+    volumes:
+      - ./data/nacos/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: ${MYSQL_ROOT_HOST}
+      MYSQL_DATABASE: ${NACOS_MYSQL_DB_NAME}
+      MYSQL_USER: ${NACOS_MYSQL_USER}
+      MYSQL_PASSWORD: ${NACOS_MYSQL_PASSWORD}
 networks:
   local:
     driver: bridge
