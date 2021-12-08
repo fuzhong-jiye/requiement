@@ -22,6 +22,10 @@ services:
       MYSQL_ROOT_HOST: ${MYSQL_ROOT_HOST}
     volumes:
       - ./data/mysql:/var/lib/mysql
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
   redis:
     image: "redis:alpine3.13"
     hostname: "redis.local"
@@ -32,6 +36,10 @@ services:
       local:
         aliases:
           - "redis.local"
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
   zookeeper:
     image: "zookeeper:3.7.0"
     hostname: "zookeeper.local"
@@ -40,6 +48,10 @@ services:
       local:
         aliases:
           - "zookeeper.local"
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
   kafka:
     image: "wurstmeister/kafka:2.13-2.7.0"
     hostname: "kafka.local"
@@ -55,6 +67,10 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
   nacos:
     image: "nacos/nacos-server:2.0.3"
     hostname: "nacos.local"
@@ -71,7 +87,7 @@ services:
     depends_on:
       - nacos-mysql
     environment:
-      PREFER_HOST_MODE: hostname
+      PREFER_HOST_MODE: ip
       MODE: standalone
       SPRING_DATASOURCE_PLATFORM: mysql
       MYSQL_SERVICE_HOST: nacos-mysql
@@ -80,6 +96,10 @@ services:
       MYSQL_SERVICE_PASSWORD: ${NACOS_MYSQL_PASSWORD}
       MYSQL_SERVICE_DB_NAME: ${NACOS_MYSQL_DB_NAME}
       MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
   nacos-mysql:
     image: nacos/nacos-mysql:8.0.16
     container_name: nacos-mysql
@@ -97,6 +117,10 @@ services:
       MYSQL_DATABASE: ${NACOS_MYSQL_DB_NAME}
       MYSQL_USER: ${NACOS_MYSQL_USER}
       MYSQL_PASSWORD: ${NACOS_MYSQL_PASSWORD}
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
 networks:
   local:
     driver: bridge
