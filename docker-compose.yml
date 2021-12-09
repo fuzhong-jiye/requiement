@@ -95,7 +95,7 @@ services:
       MYSQL_SERVICE_USER: ${NACOS_MYSQL_USER}
       MYSQL_SERVICE_PASSWORD: ${NACOS_MYSQL_PASSWORD}
       MYSQL_SERVICE_DB_NAME: ${NACOS_MYSQL_DB_NAME}
-      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_SERVICE_DB_PARAM: characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     logging:
       options:
         max-size: "200k"
@@ -117,6 +117,41 @@ services:
       MYSQL_DATABASE: ${NACOS_MYSQL_DB_NAME}
       MYSQL_USER: ${NACOS_MYSQL_USER}
       MYSQL_PASSWORD: ${NACOS_MYSQL_PASSWORD}
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.0
+    container_name: elastic
+    hostname: elastic.local
+    networks:
+      local:
+        aliases:
+          - "elastic.local"
+    ports:
+      - "9200:9200"
+    environment:
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./data/elastic:/usr/share/elasticsearch/data
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.16.0
+    container_name: kibana
+    hostname: kibana.local
+    networks:
+      local:
+        aliases:
+          - "kibana.local"
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elastic:9200
     logging:
       options:
         max-size: "200k"
