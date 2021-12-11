@@ -156,6 +156,29 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+  mongo:
+    image: mongo:5.0.5
+    container_name: mongo
+    hostname: mongo.local
+    ports:
+      - "27017:27017"
+    networks:
+      local:
+        aliases:
+          - "mongo.local"
+    environment:
+      TZ: ${MONGO_TZ}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - "${MONGO_DIR}/data:/data/db"
+      - "${MONGO_DIR}/logs:/data/logs"
+      - "${MONGO_DIR}/setup:/docker-entrypoint-initdb.d"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 networks:
   local:
     driver: bridge
