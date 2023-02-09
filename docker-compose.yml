@@ -17,6 +17,9 @@ services:
       --collation-server=utf8mb4_general_ci
       --explicit_defaults_for_timestamp=true
       --lower_case_table_names=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --server_id=1
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_ROOT_HOST: ${MYSQL_ROOT_HOST}
@@ -30,6 +33,7 @@ services:
     image: "redis:alpine3.13"
     hostname: "redis.local"
     container_name: "redis"
+    restart: always
     ports:
       - "6379:6379"
     networks:
@@ -65,7 +69,7 @@ services:
         aliases:
           - "kafka.local"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     logging:
       options:
@@ -174,6 +178,37 @@ services:
       - "${MONGO_DIR}/data:/data/db"
       - "${MONGO_DIR}/logs:/data/logs"
       - "${MONGO_DIR}/setup:/docker-entrypoint-initdb.d"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  canal-server:
+    image: canal/canal-server:v1.1.6
+    container_name: canal-server
+    hostname: canal-server.local
+    networks:
+      local:
+        aliases:
+          - "canal-server.local"
+    ports:
+      - "11111:11111"
+    environment:
+      - canal.instance.master.address=mysql:3306
+      - canal.instance.dbUsername=root
+      - canal.instance.dbPassword=123456
+      - canal.instance.connectionCharset=UTF-8
+      - canal.instance.tsdb_enable=true
+      - canal.instance.gtidon=false
+      - canal.instance.filter.regex=.*\\..*
+      - canal.serverMode=kafka
+      - canal.mq.canalBatchSize=50
+      - canal.mq.canalGetTimeout=100
+      - canal.mq.flatMessage=false
+      - canal.mq.topic=canal
+#      - canal.mq.partitionHash=.\\..*
+      - canal.mq.partition=0
+      - kafka.bootstrap.servers=kafka:9092
     logging:
       driver: "json-file"
       options:
