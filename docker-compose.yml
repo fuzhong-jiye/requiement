@@ -48,6 +48,11 @@ services:
     image: "zookeeper:3.7.0"
     hostname: "zookeeper.local"
     container_name: "zookeeper"
+    healthcheck:
+      test: [ "CMD-SHELL", "zkServer.sh status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       local:
         aliases:
@@ -63,7 +68,8 @@ services:
     ports:
       - "9092:9092"
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     networks:
       local:
         aliases:
@@ -71,6 +77,11 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics.sh --list --zookeeper zookeeper:2181" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     logging:
       options:
         max-size: "200k"
