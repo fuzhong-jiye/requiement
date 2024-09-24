@@ -225,6 +225,32 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+  auth_postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres.go-auth
+    container_name: auth_postgres
+    restart: always
+    hostname: auth_postgres.local
+    networks:
+      local:
+        aliases:
+          - "auth_postgres.local"
+    ports:
+      - '5432:5432'
+    volumes:
+      - /data/auth_postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=postgres
+      # sets the schema name, this should match the `NAMESPACE` env var set in your .env file
+      - DB_NAMESPACE=auth
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 networks:
   local:
     driver: bridge
