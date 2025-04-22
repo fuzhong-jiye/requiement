@@ -119,7 +119,6 @@ services:
     image: nacos/nacos-mysql:8.0.16
     container_name: nacos-mysql
     hostname: nacos-mysql.local
-    restart: always
     networks:
       local:
         aliases:

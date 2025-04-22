@@ -1,0 +1,137 @@
+version: "3.4"
+services:
+  nastools:
+    image: syly948/nastools:2.9.1
+    ports:
+      - 3000:3000
+    volumes:
+      - ../data/nastools/config:/config   # 冒号左边请修改为你想保存配置的路径
+      - video:/home/video # 映射数据目录
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+      - UMASK=022 # 掩码权限，默认000，可以考虑设置为022
+    restart: always
+    hostname: nastools
+    container_name: nastools
+    networks:
+      nas:
+        aliases:
+          - "nastools.nas"
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8081
+      - TORRENTING_PORT=6881
+    volumes:
+      - ../data/qbittorrent/config:/config
+      - downloads:/downloads # Mount SMB share here
+    ports:
+      - 8081:8081
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    networks:
+      nas:
+        aliases:
+          - "qbittorrent.nas"
+  jellyfin:
+    image: nyanmisaka/jellyfin:241119-amd64
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../data/jellyfin/config:/config
+      - jellyfin_cache:/cache
+      - media:/media
+    ports:
+      - 8096:8096
+      - 8920:8920
+    restart: unless-stopped
+    networks:
+      nas:
+        aliases:
+          - "jellyfin.nas"
+  chinesesubfinder:
+    image: allanpk716/chinesesubfinder:latest
+    volumes:
+      - ../data/chinesesubfinder/config:/config  # 冒号左边请修改为你想在主机上保存配置、日志等文件的路径
+      - media:/media    # 请修改为你的媒体目录，冒号右边可以改成你方便记忆的目录，多个媒体目录需要分别映射进来
+      - ../data/chinesesubfinder/browser:/root/.cache/rod/browser    # 容器重启后无需再次下载 chrome，除非 go-rod 更新
+    environment:
+      - PUID=1000         # uid
+      - PGID=1000          # gid
+      - PERMS=true        # 是否重设/media权限
+      - TZ=Asia/Shanghai  # 时区
+      - UMASK=022         # 权限掩码
+    restart: always
+    container_name: chinesesubfinder
+    networks:
+      nas:
+        aliases:
+          - "chinesesubfinder.nas"  
+    ports:
+      - 19035:19035  # 从0.20.0版本开始，通过webui来设置
+      - 19037:19037  # webui 的视频列表读取图片用，务必设置不要暴露到外网
+    logging:
+        driver: "json-file"
+        options:
+          max-size: "100m" # 限制docker控制台日志大小，可自行调整
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    networks:
+      nas:
+        aliases:
+          - "jackett.nas"  
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - AUTO_UPDATE=true #optional
+      - RUN_OPTS= #optional
+    volumes:
+      - ../data/jackett/config:/config
+      - ../data/jackett/downloads:/downloads
+    # ports:
+    #   - 9117:9117
+    restart: unless-stopped
+    logging:
+        driver: "json-file"
+        options:
+          max-size: "100m" # 限制docker控制台日志大小，可自行调整
+volumes:
+  video: # 根目录, 给 nas tool 用于管理
+    driver: local
+    driver_opts:
+      type: cifs
+      o: username=coco,password=Themtempo80?,uid=1000,gid=1000
+      device: //192.168.50.226/video    
+  downloads: # 下载的资源文件
+    driver: local
+    driver_opts:
+      type: cifs
+      o: username=coco,password=Themtempo80?,uid=1000,gid=1000
+      device: //192.168.50.226/video/downloads
+  jellyfin_cache: # jellyfin 缓存的资源文件
+    driver: local
+    driver_opts:
+      type: cifs
+      o: username=coco,password=Themtempo80?,uid=1000,gid=1000
+      device: //192.168.50.226/video/cache
+  media: # 整理刮削好的电影剧集, 采用硬链接连到 downloads
+    driver: local
+    driver_opts:
+      type: cifs
+      o: username=coco,password=Themtempo80?,uid=1000,gid=1000
+      device: //192.168.50.226/video/media
+networks:
+  nas:
+    driver: bridge
